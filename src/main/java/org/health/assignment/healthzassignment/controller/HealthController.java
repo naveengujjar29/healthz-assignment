@@ -1,14 +1,17 @@
 package org.health.assignment.healthzassignment.controller;
 
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import com.fasterxml.jackson.databind.JsonNode;
 
+import org.health.assignment.healthzassignment.service.IHealthCheck;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,28 +22,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/healthz")
 public class HealthController {
 
-    private static final String MYSQL_URL = "jdbc:mysql://localhost:3306/mysql";
-    private static final String MYSQL_USER = "root";
-    private static final String MYSQL_PASSWORD = "";
+    private static final Logger LOGGER = LoggerFactory.getLogger(HealthController.class);
 
+
+    @Autowired
+    private IHealthCheck healthCheck;
 
     @GetMapping
-    public ResponseEntity checkDatabaseHealth() {
+    public ResponseEntity checkDatabaseHealth(@RequestBody(required = false) JsonNode body) {
+        if (body != null) {
+            LOGGER.error("Body is not supported in GET API.");
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
         HttpHeaders headers = new HttpHeaders();
         headers.setCacheControl("no-cache");
-        // It will try to establish a connection with MySQL DB, if connection is okay then return OK(200 status else
-        // 503 SERVICE_UNAVAILABLE).
-        try(Connection connection = DriverManager.getConnection(MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD)) {
-            if (connection.isValid(2)) {
-                return new ResponseEntity("Database connection is up and running.", headers, HttpStatus.OK);
-            }
-            return new ResponseEntity("Database connection is not up and running.", headers,
-                    HttpStatus.SERVICE_UNAVAILABLE);
-        } catch (SQLException e) {
-            return new ResponseEntity("Database connection is not up and running.", headers,
-                    HttpStatus.SERVICE_UNAVAILABLE);
+        boolean connectionStatus = healthCheck.checkDBConnectionStatus();
+        if (connectionStatus) {
+            LOGGER.info("Failed to get the connection.");
+            return new ResponseEntity("Database is up and running", headers, HttpStatus.OK);
         }
+        return new ResponseEntity("Database is not up and running", headers, HttpStatus.SERVICE_UNAVAILABLE);
     }
-
-
 }
