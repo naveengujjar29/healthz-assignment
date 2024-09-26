@@ -29,7 +29,7 @@ public class HealthController {
     private IHealthCheck healthCheck;
 
     @GetMapping
-    public ResponseEntity checkDatabaseHealth(@RequestBody(required = false) JsonNode body) {
+    public ResponseEntity<Void> checkDatabaseHealth(@RequestBody(required = false) JsonNode body) {
         if (body != null) {
             LOGGER.error("Body is not supported in GET API.");
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -39,8 +39,8 @@ public class HealthController {
         boolean connectionStatus = healthCheck.checkDBConnectionStatus();
         if (connectionStatus) {
             LOGGER.info("Failed to get the connection.");
-            return new ResponseEntity("Database is up and running", headers, HttpStatus.OK);
+            return new ResponseEntity(headers, HttpStatus.OK);
         }
-        return new ResponseEntity("Database is not up and running", headers, HttpStatus.SERVICE_UNAVAILABLE);
+        return new ResponseEntity(headers, HttpStatus.SERVICE_UNAVAILABLE);
     }
 }
