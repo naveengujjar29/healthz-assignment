@@ -13,12 +13,11 @@ public class CustomErrorAttributes implements ErrorAttributes {
 
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
-        // Return an empty map to suppress error details
         return Collections.emptyMap();
     }
 
     @Override
     public Throwable getError(WebRequest webRequest) {
-        return null; // No exception details
+        return null;
     }
 }
